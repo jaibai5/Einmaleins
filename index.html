@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Einmaleins Tableau mit Flauschi</title>
+    <style>
+        /* --- GRUNDDESIGN & RESET --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --flauschi-blue: #3b4d9b;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            display: flex;
+            flex-direction: column;
+            /* Wichtig für Fire Tablet mit dicker Browserleiste: height: 100vh; durch height: 100%; ersetzen und body/html 100% geben */
+            height: 100%;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        /* --- KOPFZEILE (BELOHNUNGEN & SHOP) --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-bottom: 3px solid white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            z-index: 10;
+            height: 70px;
+            /* Damit die Kopfzeile nicht schrumpft */
+            flex-shrink: 0; 
+        }
+
+        .counter-box {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 5px 15px;
+            border-radius: 30px;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 4px 0px rgba(0,0,0,0.1);
+            border: 2px solid #eee;
+        }
+
+        .counter-icon {
+            font-size: 28px;
+            margin-right: 8px;
+        }
+
+        #star-counter-box { border-color: #ffd700; }
+        #carrot-counter-box { border-color: #ff9800; }
+
+        /* NEU: Unsichtbarer Entwickler-Knopf (viel breiter) */
+        .dev-btn {
+            background: transparent;
+            border: none;
+            flex-grow: 1;
+            height: 60px;
+            min-width: 80px;
+            cursor: default;
+        }
+
+        /* NEU: Garderoben-Button in der Mitte */
+        .wardrobe-btn {
+            background: linear-gradient(90deg, #ff4d4d, #ff9933, #ffd633, #33cc33, #3399ff);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0 15px;
+            height: 40px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 5px 0px #d32f2f;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            gap: 8px;
+        }
+        .wardrobe-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0px #d32f2f;
+        }
+
+        #shop-btn {
+            background: #9c27b0;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0 15px;
+            height: 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 5px 0px #7b1fa2;
+            transition: all 0.1s;
+        }
+        #shop-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0px 0px #7b1fa2;
+        }
+
+        /* --- SHOP & ANKLEIDEZIMMER MODAL --- */
+        .system-modal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            z-index: 3000; 
+            justify-content: center; 
+            align-items: center;
+            backdrop-filter: blur(3px);
+        }
+        .system-modal.active { display: flex; }
+
+        .modal-content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 4px solid var(--flauschi-blue);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            /* Etwas mehr Luft für Tablets */
+            max-height: 80vh; 
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Spezielles Design für das breitere Ankleidezimmer */
+        #wardrobe-content {
+            max-width: 800px;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 30px;
+        }
+
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f0f8ff;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 15px;
+            font-size: 18px;
+            border: 2px solid #b3e5fc;
+        }
+        .shop-item button {
+            background: #ff9800;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #e65100;
+        }
+        .shop-item button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0px #e65100;
+        }
+        .shop-item button:disabled {
+            background: #ccc;
+            box-shadow: 0 4px 0px #aaa;
+            cursor: not-allowed;
+        }
+
+        /* --- HAUPTBEREICH & TABLEAU --- */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            /* Wichtig, damit das Tableau nicht aus dem sichtbaren Bereich rutscht */
+            padding: 1vmin; 
+        }
+
+        .board-container {
+            background-color: #e6c280; 
+            padding: 1.5vmin;
+            border-radius: 2vmin;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 0 10px rgba(139, 69, 19, 0.3);
+            /* Dynamische Anpassung an die Höhe, falls diese geringer ist als die Breite (Landscape auf Tablet) */
+            max-width: 95vmin;
+            max-height: calc(100vh - 80px); /* 80px Abzug für den Header */
+            aspect-ratio: 1 / 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 0.5vmin; 
+            width: 100%;
+            height: 100%;
+            background-color: #d2a65a; 
+            padding: 0.5vmin;
+            border-radius: 1vmin;
+        }
+
+        /* --- Würfel & 3D Flip Logik --- */
+        .cube-wrapper {
+            perspective: 800px;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .cube {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .cube.flipped { transform: rotateY(180deg); }
+
+        .cube-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(10px, 2.2vmin, 24px);
+            font-weight: bold;
+            color: #333;
+            border-radius: 4px;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,0.3);
+        }
+
+        .cube-back {
+            transform: rotateY(180deg);
+            background-color: #f8fafc;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            /* Puzzle Bild */
+            background-image: url('alpaka.jpg');
+            background-size: 1000% 1000%;
+            background-repeat: no-repeat;
+            text-shadow: 0px 0px 4px rgba(255,255,255,1), 
+                         0px 0px 8px rgba(255,255,255,1), 
+                         0px 0px 12px rgba(255,255,255,1);
+            font-size: clamp(12px, 2.5vmin, 28px);
+            font-weight: 900;
+        }
+
+        /* --- Wackel-Animation (Falsche Antwort) --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-5px) rotate(-3deg); }
+            40% { transform: translateX(5px) rotate(3deg); }
+            60% { transform: translateX(-5px) rotate(-3deg); }
+            80% { transform: translateX(5px) rotate(3deg); }
+        }
+        .cube.wobble { animation: shake 0.5s; }
+
+        /* --- Nummernblock (Numpad) Overlay --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+        .numpad-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            width: 320px;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+        .modal-overlay.active .numpad-container { transform: scale(1); }
+
+        .numpad-display-area { text-align: center; margin-bottom: 20px; }
+        .task-display { font-size: 24px; color: #64748b; margin-bottom: 10px; }
+        
+        .input-display {
+            font-size: 48px; font-weight: bold; color: #0f172a;
+            background-color: #f1f5f9; height: 70px; border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            border: 2px solid #cbd5e1; letter-spacing: 2px;
+        }
+
+        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .num-btn {
+            background-color: #e2e8f0; border: none; border-radius: 12px;
+            font-size: 28px; font-weight: bold; color: #334155;
+            padding: 15px 0; cursor: pointer; box-shadow: 0 4px 0 #cbd5e1;
+            font-family: inherit;
+        }
+        .num-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #cbd5e1; }
+
+        .action-btn { color: white; font-size: 24px; }
+        .btn-clear { background-color: #f87171; box-shadow: 0 4px 0 #ef4444; }
+        .btn-clear:active { box-shadow: 0 0 0 #ef4444; }
+        .btn-check { background-color: #4ade80; box-shadow: 0 4px 0 #22c55e; grid-column: span 2; }
+        .btn-check:active { box-shadow: 0 0 0 #22c55e; }
+
+        .btn-close {
+            position: absolute; top: -15px; right: -15px; width: 40px; height: 40px;
+            border-radius: 50%; background-color: #ef4444; color: white;
+            font-weight: bold; font-size: 20px; border: 3px solid white;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        /* --- FLAUSCHI BEREICH (ZENTRIERT ÜBER DEM BRETT) --- */
+        #flauschi-area {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            width: 280px;
+            z-index: 2000;
+            pointer-events: none; 
+        }
+
+        /* Sprechblase */
+        .speech-bubble {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--flauschi-blue);
+            text-align: center;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            border: 4px solid #ffd700;
+            width: 100%;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .speech-bubble::after {
+            content: ''; position: absolute; bottom: -18px; right: 40px;
+            border-width: 18px 18px 0 0; border-style: solid;
+            border-color: #ffd700 transparent transparent transparent;
+        }
+        .speech-bubble::before {
+            content: ''; position: absolute; bottom: -12px; right: 43px;
+            border-width: 14px 14px 0 0; border-style: solid;
+            border-color: white transparent transparent transparent;
+            z-index: 1;
+        }
+
+        .flauschi-svg-class {
+            width: 220px;
+            height: auto;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.3));
+        }
+
+        /* Garderoben Flauschi groß */
+        #wardrobe-svg {
+            width: 300px;
+            max-width: 100%;
+        }
+
+        /* --- FLAUSCHI ANIMATIONEN --- */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .bounce { animation: jump 0.5s ease; }
+        @keyframes jump {
+            0% { transform: scale(1) translateY(0); }
+            30% { transform: scale(1.1, 0.9) translateY(10px); }
+            50% { transform: scale(0.9, 1.1) translateY(-30px); }
+            80% { transform: scale(1.05, 0.95) translateY(0); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .chew { animation: chewing 0.8s ease 2; }
+        @keyframes chewing {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05, 0.95); }
+            100% { transform: scale(1); }
+        }
+
+        .backflip {
+            animation: flip 0.8s ease-in-out;
+            transform-origin: center center;
+        }
+        @keyframes flip {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-80px) rotate(-180deg); }
+            100% { transform: translateY(0) rotate(-360deg); }
+        }
+
+        .duck {
+            animation: ducking 1.5s ease;
+            transform-origin: bottom center;
+        }
+        @keyframes ducking {
+            0% { transform: scaleY(1) translateY(0); }
+            20% { transform: scaleY(0.7) scaleX(1.1) translateY(15px); }
+            80% { transform: scaleY(0.7) scaleX(1.1) translateY(15px); }
+            100% { transform: scaleY(1) translateY(0); }
+        }
+
+        .flauschi-eye {
+            animation: blink 4s infinite;
+            transform-origin: 136px 61px; /* Angepasst an den verschobenen Kopf */
+        }
+        @keyframes blink {
+            0%, 95%, 100% { transform: scaleY(1); }
+            97% { transform: scaleY(0.1); }
+        }
+
+        /* Fliegende Möhre / Stern */
+        .flying-item {
+            position: fixed;
+            font-size: 40px;
+            z-index: 2500;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));
+        }
+
+        .pulse-star { animation: pulse 0.5s ease 3; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- BELOHNUNGS-LEISTE (KOPFZEILE) -->
+    <header>
+        <div class="counter-box" id="carrot-counter-box">
+            <span class="counter-icon">🥕</span>
+            <span id="carrot-count">0</span> <span style="font-size:16px; margin-left:5px; color:#888;">/ 10</span>
+        </div>
+        
+        <!-- Entwickler-Knopf (viel breiter) -->
+        <button class="dev-btn" onclick="activateDevMode()"></button>
+
+        <!-- Garderoben-Button in der Mitte -->
+        <button class="wardrobe-btn" onclick="openWardrobe()" title="Flauschis Ankleidezimmer">🦙 Kleiderschrank</button>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="shop-btn" onclick="openShop()">🛍️ Shop</button>
+            <div class="counter-box" id="star-counter-box">
+                <span class="counter-icon">⭐</span>
+                <span id="star-count">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- SHOP MODAL -->
+    <div id="shop-modal" class="system-modal">
+        <div class="modal-content-box">
+            <h2 style="color: var(--flauschi-blue); margin-top: 0;">Flauschis Kleiderschrank 🛍️</h2>
+            <p style="font-size: 16px; margin-bottom: 20px;">Kaufe tolle Sachen für Flauschi mit deinen Sternen!</p>
+            
+            <div class="shop-item">
+                <span>😎 coole Brille</span>
+                <button onclick="buyItem('sunglasses', 1)" id="btn-sunglasses">1 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>👟 rote Schuhe</span>
+                <button onclick="buyItem('shoes_red', 1)" id="btn-shoes_red">1 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🔔 Halsband</span>
+                <button onclick="buyItem('collar', 1)" id="btn-collar">1 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🧣 kuscheliger Schal</span>
+                <button onclick="buyItem('scarf', 1)" id="btn-scarf">1 ⭐</button>
+            </div>
+            
+            <div class="shop-item">
+                <span>🎀 Riesen-Fliege</span>
+                <button onclick="buyItem('bowtie', 2)" id="btn-bowtie">2 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🎧 Kopfhörer</span>
+                <button onclick="buyItem('headphones', 2)" id="btn-headphones">2 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🦄 Einhorn-Horn</span>
+                <button onclick="buyItem('unicorn', 2)" id="btn-unicorn">2 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🧔 Schnurrbart</span>
+                <button onclick="buyItem('mustache', 2)" id="btn-mustache">2 ⭐</button>
+            </div>
+
+            <div class="shop-item">
+                <span>🎩 toller Hut</span>
+                <button onclick="buyItem('hat', 3)" id="btn-hat">3 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🦋 Feen-Flügel</span>
+                <button onclick="buyItem('wings', 3)" id="btn-wings">3 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>💛 goldenes Fell</span>
+                <button onclick="buyItem('goldfur', 3)" id="btn-goldfur">3 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>💖 rosa Fell</span>
+                <button onclick="buyItem('pinkfur', 3)" id="btn-pinkfur">3 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>💙 blaues Fell</span>
+                <button onclick="buyItem('bluefur', 3)" id="btn-bluefur">3 ⭐</button>
+            </div>
+
+            <div class="shop-item">
+                <span>👑 Königskrone</span>
+                <button onclick="buyItem('crown', 4)" id="btn-crown">4 ⭐</button>
+            </div>
+            <div class="shop-item">
+                <span>🦸‍♂️ Umhang</span>
+                <button onclick="buyItem('cape', 4)" id="btn-cape">4 ⭐</button>
+            </div>
+            
+            <button class="num-btn btn-clear" style="margin-top:20px; font-size: 18px; padding: 10px 20px; color:white; width: 100%;" onclick="closeShop()">Schließen</button>
+        </div>
+    </div>
+
+    <!-- ANKLEIDEZIMMER (GARDEROBE) MODAL -->
+    <div id="wardrobe-modal" class="system-modal">
+        <div class="modal-content-box" id="wardrobe-content">
+            <button class="btn-close" onclick="closeWardrobe()">X</button>
+            
+            <!-- Linke Seite: Flauschi Groß -->
+            <div style="flex: 1; min-width: 250px; display: flex; justify-content: center; align-items: center;">
+                <div id="wardrobe-svg-container">
+                    <!-- Wird durch JS befüllt -->
+                </div>
+            </div>
+            
+            <!-- Rechte Seite: Items zum Anziehen -->
+            <div style="flex: 1.5; min-width: 280px; text-align: left;">
+                <h2 style="color: var(--flauschi-blue); margin-bottom: 5px;">Ankleidezimmer 🪞</h2>
+                <p style="color: #64748b; margin-bottom: 20px;">Tippe auf gekaufte Sachen, um sie an- oder auszuziehen.</p>
+                <div id="wardrobe-items-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
+                    <!-- JS generiert -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HAUPTBEREICH: DAS TABLEAU -->
+    <div class="main-content">
+        <div class="board-container">
+            <div class="grid" id="game-board">
+                <!-- Würfel werden hier generiert -->
+            </div>
+        </div>
+    </div>
+
+    <!-- DAS EINGABE-FENSTER (NUMPAD) -->
+    <div class="modal-overlay" id="modal">
+        <div class="numpad-container">
+            <button class="btn-close" onclick="closeModal()">X</button>
+            
+            <div class="numpad-display-area">
+                <div class="task-display" id="task-text">1 × 1 = ?</div>
+                <div class="input-display" id="user-input"></div>
+            </div>
+
+            <div class="numpad-grid">
+                <button class="num-btn" onclick="appendNumber(1)">1</button>
+                <button class="num-btn" onclick="appendNumber(2)">2</button>
+                <button class="num-btn" onclick="appendNumber(3)">3</button>
+                
+                <button class="num-btn" onclick="appendNumber(4)">4</button>
+                <button class="num-btn" onclick="appendNumber(5)">5</button>
+                <button class="num-btn" onclick="appendNumber(6)">6</button>
+                
+                <button class="num-btn" onclick="appendNumber(7)">7</button>
+                <button class="num-btn" onclick="appendNumber(8)">8</button>
+                <button class="num-btn" onclick="appendNumber(9)">9</button>
+                
+                <button class="num-btn action-btn btn-clear" onclick="clearInput()">C</button>
+                <button class="num-btn" onclick="appendNumber(0)">0</button>
+                <button class="num-btn action-btn btn-check" onclick="checkAnswer(this)">
+                    ✔ OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FLAUSCHI BEREICH (Zentriert beim Einblenden nach der Aufgabe) -->
+    <div id="flauschi-area">
+        <div class="speech-bubble" id="flauschi-text">
+            Mmh, lecker! Richtig!
+        </div>
+        <div id="flauschi-svg-container">
+             <!-- Wird durch JS befüllt -->
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SOUND ENGINE ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'throw') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'chew') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+                
+                setTimeout(() => {
+                    if(!audioCtx) return;
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(450, audioCtx.currentTime);
+                    osc2.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.1);
+                    gain2.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc2.start(audioCtx.currentTime); osc2.stop(audioCtx.currentTime + 0.1);
+                }, 150);
+            } else if (type === 'star') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554.37, now + 0.1);
+                osc.frequency.setValueAtTime(659.25, now + 0.2);
+                osc.frequency.setValueAtTime(880, now + 0.3);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.4);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+        }
+
+        // --- 2. FLAUSCHI SVG BAUTEIL ---
+        // Wir erzeugen das SVG hier im Skript, damit wir es leicht für den Spielbereich und das Ankleidezimmer klonen können
+        function getFlauschiSVGString(id) {
+            // FIX: Jeder Farbverlauf bekommt eine einzigartige ID basierend auf dem SVG Element, um Transparenz-Bugs zu verhindern!
+            const gradientId = "rainbowGrad-" + id;
+            return `
+            <svg id="${id}" class="flauschi-svg-class" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#ff4d4d"/>
+                        <stop offset="20%" stop-color="#ff9933"/>
+                        <stop offset="40%" stop-color="#ffd633"/>
+                        <stop offset="60%" stop-color="#33cc33"/>
+                        <stop offset="80%" stop-color="#3399ff"/>
+                        <stop offset="100%" stop-color="#9c27b0"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Beine hinten -->
+                <rect x="60" y="140" width="16" height="40" rx="8" fill="#444"/>
+                <rect x="120" y="140" width="16" height="40" rx="8" fill="#444"/>
+                <!-- Beine vorne -->
+                <rect x="50" y="145" width="16" height="40" rx="8" fill="#222"/>
+                <rect x="110" y="145" width="16" height="40" rx="8" fill="#222"/>
+
+                <path d="M120 120 L160 120 L146 61 L126 61 Z" fill="var(--flauschi-blue)" stroke="#000" stroke-width="3"/>
+
+                <!-- Körper -->
+                <path class="alpaca-body" d="M 40 100 C 20 100, 10 120, 20 140 C 10 160, 40 160, 50 150 C 60 170, 90 170, 100 150 C 120 170, 150 160, 150 140 C 160 120, 150 100, 130 100 C 120 80, 90 70, 70 90 C 50 80, 40 90, 40 100 Z" fill="url(#${gradientId})" stroke="#000" stroke-width="4"/>
+
+                <!-- Umhang (Jetzt im Vordergrund, über dem Körper liegend) -->
+                <g class="acc-cape" style="display:none;">
+                    <path d="M 125 105 C 90 110, 40 100, 20 150 C 50 170, 90 140, 130 115 Z" fill="#E53935" stroke="#B71C1C" stroke-width="3"/>
+                    <circle cx="125" cy="105" r="5" fill="#FFD700" stroke="#B71C1C" stroke-width="1"/>
+                </g>
+
+                <!-- Flügel (Jetzt im Vordergrund, über dem Körper liegend) -->
+                <g class="acc-wings" style="display:none;">
+                    <path d="M 90 110 Q 50 20 -10 40 Q 30 80 80 130 Z" fill="rgba(200, 255, 255, 0.9)" stroke="#00ffff" stroke-width="2"/>
+                    <path d="M 100 120 Q 60 40 10 60 Q 40 100 90 140 Z" fill="rgba(255, 200, 255, 0.9)" stroke="#ff00ff" stroke-width="2"/>
+                </g>
+
+                <!-- Kopf & Ohren -->
+                <ellipse cx="136" cy="66" rx="25" ry="20" fill="var(--flauschi-blue)" stroke="#000" stroke-width="3"/>
+                <path d="M121 51 L116 36 L131 46 Z" fill="var(--flauschi-blue)" stroke="#000" stroke-width="3"/>
+                <path d="M141 46 L151 31 L151 46 Z" fill="var(--flauschi-blue)" stroke="#000" stroke-width="3"/>
+                <circle cx="126" cy="46" r="8" fill="var(--flauschi-blue)" stroke="#000" stroke-width="2"/>
+                <circle cx="136" cy="41" r="10" fill="var(--flauschi-blue)" stroke="#000" stroke-width="2"/>
+                <circle cx="146" cy="46" r="8" fill="var(--flauschi-blue)" stroke="#000" stroke-width="2"/>
+
+                <!-- Schnauze -->
+                <ellipse cx="156" cy="71" rx="12" ry="10" fill="#fff" stroke="#000" stroke-width="2"/>
+                <circle cx="163" cy="68" r="4" fill="#ff66b2"/>
+                <path d="M 151 74 Q 156 79 161 74" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Schnurrbart -->
+                <g class="acc-mustache" style="display:none;">
+                    <path d="M 148 74 Q 156 68 161 74 Q 166 68 169 74 Q 166 77 161 74 Q 156 77 148 74 Z" fill="#000"/>
+                </g>
+
+                <!-- Schuhe -->
+                <g class="acc-shoes_red" style="display:none;">
+                    <rect x="58" y="170" width="20" height="10" rx="4" fill="#ff4d4d"/>
+                    <rect x="118" y="170" width="20" height="10" rx="4" fill="#ff4d4d"/>
+                    <rect x="48" y="175" width="20" height="10" rx="4" fill="#cc0000"/>
+                    <rect x="108" y="175" width="20" height="10" rx="4" fill="#cc0000"/>
+                </g>
+
+                <!-- Halsband -->
+                <g class="acc-collar" style="display:none;">
+                    <path d="M121 100 Q 136 110 151 100" fill="none" stroke="#f44336" stroke-width="6"/>
+                    <circle cx="136" cy="107" r="6" fill="#ffd700" stroke="#d4af37" stroke-width="1"/>
+                </g>
+
+                <!-- Schal -->
+                <g class="acc-scarf" style="display:none;">
+                    <rect x="116" y="90" width="40" height="15" rx="5" fill="#f44336" stroke="#b71c1c" stroke-width="2" />
+                    <rect x="121" y="105" width="12" height="25" rx="3" fill="#f44336" stroke="#b71c1c" stroke-width="2" />
+                    <!-- Schal Streifen -->
+                    <line x1="126" y1="90" x2="126" y2="105" stroke="#4CAF50" stroke-width="4"/>
+                    <line x1="141" y1="90" x2="141" y2="105" stroke="#4CAF50" stroke-width="4"/>
+                </g>
+
+                <!-- Fliege -->
+                <g class="acc-bowtie" style="display:none;">
+                    <path d="M136 110 L116 95 L116 125 Z" fill="#e91e63" stroke="#fff" stroke-width="2"/>
+                    <path d="M136 110 L156 95 L156 125 Z" fill="#e91e63" stroke="#fff" stroke-width="2"/>
+                    <circle cx="136" cy="110" r="7" fill="#c2185b" stroke="#fff" stroke-width="2"/>
+                </g>
+
+                <!-- Kopfhörer (angepasst: Sitzen jetzt oben auf den Ohren) -->
+                <g class="acc-headphones" style="display:none;">
+                    <path d="M116 46 A 25 25 0 0 1 156 41" fill="none" stroke="#333" stroke-width="4"/>
+                    <rect x="110" y="36" width="14" height="20" rx="6" fill="#00bcd4"/>
+                    <rect x="146" y="31" width="14" height="20" rx="6" fill="#00bcd4"/>
+                </g>
+
+                <!-- Auge -->
+                <g class="flauschi-eye">
+                    <circle cx="136" cy="61" r="4" fill="#000"/>
+                    <circle cx="137" cy="60" r="1.5" fill="#fff"/>
+                </g>
+
+                <!-- Sonnenbrille -->
+                <g class="acc-sunglasses" style="display:none;">
+                    <rect x="126" y="51" width="20" height="14" rx="4" fill="#222"/>
+                    <line x1="146" y1="58" x2="153" y2="58" stroke="#222" stroke-width="3"/>
+                    <rect x="153" y="51" width="10" height="14" rx="4" fill="#222"/>
+                    <line x1="126" y1="56" x2="116" y2="46" stroke="#222" stroke-width="3"/>
+                </g>
+
+                <!-- Einhorn (angepasst: Zeigt jetzt nach vorne/rechts) -->
+                <g class="acc-unicorn" style="display:none;">
+                    <path d="M126 46 L166 11 L142 46 Z" fill="#ffd700" stroke="#d4af37" stroke-width="2"/>
+                    <line x1="134" y1="38" x2="144" y2="30" stroke="#fff" stroke-width="2"/>
+                    <line x1="144" y1="28" x2="154" y2="20" stroke="#fff" stroke-width="2"/>
+                    <circle cx="166" cy="11" r="3" fill="#fff"/>
+                    <circle cx="156" cy="21" r="2" fill="#fff"/>
+                    <circle cx="176" cy="1" r="1.5" fill="#fff"/>
+                </g>
+
+                <!-- Hut -->
+                <g class="acc-hat" style="display:none;">
+                    <ellipse cx="136" cy="41" rx="28" ry="8" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                    <path d="M121 41 L126 6 L146 6 L151 41 Z" fill="#ff9800" stroke="#e65100" stroke-width="2"/>
+                    <rect x="123" y="31" width="26" height="8" fill="#e91e63"/>
+                </g>
+
+                <!-- Krone (angepasst: Tiefer gesetzt, damit sie richtig aufsitzt) -->
+                <g class="acc-crown" style="display:none;">
+                    <path d="M 121 44 L 116 14 L 131 29 L 141 9 L 151 29 L 166 14 L 161 44 Z" fill="#FFD700" stroke="#B8860B" stroke-width="2"/>
+                    <circle cx="116" cy="14" r="3" fill="#E91E63"/>
+                    <circle cx="141" cy="9" r="4" fill="#00BCD4"/>
+                    <circle cx="166" cy="14" r="3" fill="#E91E63"/>
+                </g>
+            </svg>`;
+        }
+
+        // SVG Container füllen
+        document.getElementById('flauschi-svg-container').innerHTML = getFlauschiSVGString('flauschi-svg');
+        document.getElementById('wardrobe-svg-container').innerHTML = getFlauschiSVGString('wardrobe-svg');
+
+        const flauschiSvg = document.getElementById('flauschi-svg');
+        const flauschiText = document.getElementById('flauschi-text');
+        const flauschiArea = document.getElementById('flauschi-area');
+
+
+        // --- 3. FORTSCHRITT, BELOHNUNGEN & INVENTAR ---
+        let carrots = 0;
+        let stars = 0;
+        
+        // Was hat Nea im Shop gekauft?
+        let inventory = { 
+            sunglasses: false, shoes_red: false, collar: false, scarf: false, bowtie: false, 
+            headphones: false, unicorn: false, mustache: false, hat: false, wings: false, 
+            goldfur: false, pinkfur: false, bluefur: false, crown: false, cape: false 
+        };
+
+        // Was hat Flauschi aktuell angezogen?
+        let equipped = { 
+            sunglasses: false, shoes_red: false, collar: false, scarf: false, bowtie: false, 
+            headphones: false, unicorn: false, mustache: false, hat: false, wings: false, 
+            goldfur: false, pinkfur: false, bluefur: false, crown: false, cape: false 
+        };
+
+        const itemNames = {
+            sunglasses: "😎 Brille", shoes_red: "👟 Schuhe", collar: "🔔 Halsband", scarf: "🧣 Schal",
+            bowtie: "🎀 Fliege", headphones: "🎧 Kopfhörer", unicorn: "🦄 Horn", mustache: "🧔 Bart",
+            hat: "🎩 Hut", wings: "🦋 Flügel", crown: "👑 Krone", cape: "🦸‍♂️ Umhang",
+            goldfur: "💛 Gold", pinkfur: "💖 Rosa", bluefur: "💙 Blau"
+        };
+
+        const carrotCountEl = document.getElementById('carrot-count');
+        const starCountEl = document.getElementById('star-count');
+
+        function saveProgress() {
+            const data = { carrots, stars, inventory, equipped };
+            localStorage.setItem('einmaleinsProgress', JSON.stringify(data));
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem('einmaleinsProgress');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    carrots = data.carrots || 0;
+                    stars = data.stars || 0;
+                    if (data.inventory) inventory = { ...inventory, ...data.inventory };
+                    
+                    // Lade auch das Ankleidezimmer, falls schon gespeichert.
+                    // Falls nicht (altes Savegame), ziehe einfach alles an, was gekauft wurde
+                    if (data.equipped) {
+                        equipped = { ...equipped, ...data.equipped };
+                    } else {
+                        equipped = { ...inventory };
+                        // Felle korrigieren: Man kann nur eines haben
+                        let foundFur = false;
+                        ['pinkfur', 'goldfur', 'bluefur'].forEach(f => {
+                            if (equipped[f]) {
+                                if (foundFur) equipped[f] = false;
+                                foundFur = true;
+                            }
+                        });
+                    }
+
+                } catch (e) { console.error("Fehler beim Laden", e); }
+            }
+            carrotCountEl.innerText = carrots;
+            starCountEl.innerText = stars;
+            
+            updateShopButtons();
+            updateAllAlpacas();
+        }
+
+        function updateAllAlpacas() {
+            // Updated sowohl Flauschi im Spiel als auch in der Garderobe
+            const svgs = [document.getElementById('flauschi-svg'), document.getElementById('wardrobe-svg')];
+            
+            svgs.forEach(svg => {
+                if(!svg) return;
+                
+                // Fellfarbe setzen
+                const body = svg.querySelector('.alpaca-body');
+                if (equipped['goldfur']) body.setAttribute('fill', '#ffd700');
+                else if (equipped['pinkfur']) body.setAttribute('fill', '#ffb3d9');
+                else if (equipped['bluefur']) body.setAttribute('fill', '#80d4ff');
+                else body.setAttribute('fill', 'url(#rainbowGrad-' + svg.id + ')');
+                
+                // Alle Kleidungsstücke an/aus
+                for(let item in equipped) {
+                    if (['goldfur', 'pinkfur', 'bluefur'].includes(item)) continue;
+                    const el = svg.querySelector('.acc-' + item);
+                    if (el) {
+                        el.style.display = equipped[item] ? 'block' : 'none';
+                    }
+                }
+            });
+        }
+
+        loadProgress();
+
+        // Animationen aufräumen
+        flauschiSvg.addEventListener('animationend', (e) => {
+            if (['flip', 'ducking', 'chewing', 'jump'].includes(e.animationName)) {
+                flauschiSvg.classList.remove('backflip', 'duck', 'chew', 'bounce');
+            }
+        });
+
+        const praiseSentences = ["Mmh, lecker!", "Super gerechnet!", "Richtig! Noch eine Möhre!", "Du bist ein Mathe-Profi!"];
+
+        function createFlyingItem(emoji, startX, startY, onArriveCallback) {
+            const item = document.createElement('div');
+            item.className = 'flying-item';
+            item.innerText = emoji;
+            item.style.left = startX + 'px';
+            item.style.top = startY + 'px';
+            document.body.appendChild(item);
+
+            let targetX, targetY;
+            if (emoji === '🥕') {
+                const flauschiRect = flauschiSvg.getBoundingClientRect();
+                // Die Schnauze von Flauschi ist ungefähr bei 75% der Breite und 35% der Höhe
+                targetX = flauschiRect.left + (flauschiRect.width * 0.75) - 20; 
+                targetY = flauschiRect.top + (flauschiRect.height * 0.35) - 20;
+            } else if (emoji === '⭐') {
+                const starBoxRect = document.getElementById('star-counter-box').getBoundingClientRect();
+                targetX = starBoxRect.left + 15;
+                targetY = starBoxRect.top + 5;
+            }
+
+            setTimeout(() => {
+                item.style.left = targetX + 'px';
+                item.style.top = targetY + 'px';
+                item.style.transform = 'scale(0.5)'; 
+                item.style.opacity = '0.5';
+                setTimeout(() => {
+                    document.body.removeChild(item);
+                    if(onArriveCallback) onArriveCallback();
+                }, 800); 
+            }, 50);
+        }
+
+        function awardStar() {
+            flauschiText.innerText = "JUHU! 10 Möhren! Ein Stern für dich!";
+            playSound('star');
+            flauschiSvg.classList.remove('bounce'); void flauschiSvg.offsetWidth;
+            flauschiSvg.classList.add('bounce');
+
+            const flauschiRect = flauschiSvg.getBoundingClientRect();
+            const startX = flauschiRect.left + flauschiRect.width / 2;
+            const startY = flauschiRect.top;
+
+            createFlyingItem('⭐', startX, startY, function() {
+                stars++;
+                starCountEl.innerText = stars;
+                const starBox = document.getElementById('star-counter-box');
+                starBox.classList.remove('pulse-star'); void starBox.offsetWidth;
+                starBox.classList.add('pulse-star');
+                saveProgress();
+            });
+        }
+
+        // --- NEU: ENTWICKLER MODUS ---
+        function activateDevMode() {
+            const pwd = prompt("Entwickler-Passwort:");
+            if (pwd === "Aff") {
+                stars += 9999;
+                starCountEl.innerText = stars;
+                saveProgress();
+                alert("Entwicklermodus aktiv: 9999 Sterne hinzugefügt!");
+            }
+        }
+
+        // --- 4. SHOP ---
+        function openShop() { document.getElementById('shop-modal').classList.add('active'); playSound('throw'); }
+        function closeShop() { document.getElementById('shop-modal').classList.remove('active'); playSound('throw'); }
+
+        function updateShopButtons() {
+            for (let item in inventory) {
+                if (inventory[item]) {
+                    const btn = document.getElementById('btn-' + item);
+                    if(btn) {
+                        btn.innerText = "Gekauft! ✔️"; btn.disabled = true;
+                        btn.style.backgroundColor = '#4CAF50'; btn.style.boxShadow = '0 4px 0px #388E3C';
+                    }
+                }
+            }
+        }
+
+        function buyItem(item, price) {
+            if (inventory[item]) return;
+            if (stars >= price) {
+                stars -= price;
+                starCountEl.innerText = stars;
+                
+                // Im Shop kaufen
+                inventory[item] = true;
+                
+                // Automatisches Anziehen nach dem Kauf
+                if (['goldfur', 'pinkfur', 'bluefur'].includes(item)) {
+                    equipped['goldfur'] = false; equipped['pinkfur'] = false; equipped['bluefur'] = false;
+                }
+                equipped[item] = true;
+                
+                updateShopButtons();
+                updateAllAlpacas();
+                
+                playSound('star');
+                saveProgress();
+            } else {
+                playSound('wrong');
+                alert(`Dafür brauchst du ${price} Sterne. Du hast erst ${stars}.`);
+            }
+        }
+
+        // --- 5. NEU: ANKLEIDEZIMMER (WARDROBE) ---
+        function openWardrobe() {
+            document.getElementById('wardrobe-modal').classList.add('active');
+            playSound('throw');
+            renderWardrobeGrid();
+        }
+
+        function closeWardrobe() {
+            document.getElementById('wardrobe-modal').classList.remove('active');
+            playSound('throw');
+        }
+
+        function toggleEquip(item) {
+            playSound('throw');
+            // Logik für Fell: Nur eine Fellfarbe gleichzeitig
+            if (['goldfur', 'pinkfur', 'bluefur'].includes(item)) {
+                if (!equipped[item]) {
+                    equipped['goldfur'] = false;
+                    equipped['pinkfur'] = false;
+                    equipped['bluefur'] = false;
+                    equipped[item] = true; // Neues Fell anziehen
+                } else {
+                    equipped[item] = false; // Zurück zum Regenbogen-Fell
+                }
+            } else {
+                // Normale Kleidung einfach an/aus schalten
+                equipped[item] = !equipped[item];
+            }
+            
+            saveProgress();
+            updateAllAlpacas();
+            renderWardrobeGrid(); // Buttons neu zeichnen, um Farbe zu aktualisieren
+        }
+
+        function renderWardrobeGrid() {
+            const grid = document.getElementById('wardrobe-items-grid');
+            grid.innerHTML = '';
+            
+            let hasItems = false;
+            
+            for(let key in inventory) {
+                if(inventory[key]) {
+                    hasItems = true;
+                    const btn = document.createElement('button');
+                    const isAn = equipped[key];
+                    
+                    // Styling des Buttons basierend auf AN/AUS
+                    btn.style.display = 'flex';
+                    btn.style.flexDirection = 'column';
+                    btn.style.justifyContent = 'center';
+                    btn.style.alignItems = 'center';
+                    btn.style.padding = '12px 5px';
+                    btn.style.borderRadius = '12px';
+                    btn.style.border = isAn ? '3px solid #4ade80' : '2px solid #cbd5e1';
+                    btn.style.backgroundColor = isAn ? '#eafbf1' : '#f8fafc';
+                    btn.style.cursor = 'pointer';
+                    btn.style.fontSize = '16px';
+                    btn.style.boxShadow = isAn ? '0 3px 0px #22c55e' : '0 3px 0px #cbd5e1';
+                    btn.style.transition = 'transform 0.1s';
+                    
+                    btn.onmousedown = () => btn.style.transform = 'translateY(3px)';
+                    btn.onmouseup = () => btn.style.transform = 'translateY(0)';
+                    
+                    btn.innerHTML = `
+                        <span style="font-weight:bold; color:#1e293b;">${itemNames[key]}</span>
+                        <div style="margin-top:6px; font-weight:900; font-size:14px; color: ${isAn ? '#22c55e' : '#94a3b8'};">
+                            ${isAn ? 'AN' : 'AUS'}
+                        </div>
+                    `;
+                    
+                    btn.onclick = () => toggleEquip(key);
+                    grid.appendChild(btn);
+                }
+            }
+            
+            if(!hasItems) {
+                grid.style.display = 'block';
+                grid.innerHTML = '<p style="color:#94a3b8; font-size:18px;">Du hast noch keine Sachen gekauft. Gehe zuerst in den Shop! 🛍️</p>';
+            } else {
+                grid.style.display = 'grid';
+            }
+        }
+
+
+        // --- 6. EINMALEINS TABLEAU LOGIK ---
+        const board = document.getElementById('game-board');
+        const modal = document.getElementById('modal');
+        const taskText = document.getElementById('task-text');
+        const userInputDisplay = document.getElementById('user-input');
+        
+        let currentAnswer = 0;
+        let currentCubeElement = null;
+        let currentInputValue = "";
+
+        const columnColors = ['#fde047', '#fbbf24', '#f97316', '#ef4444', '#f472b6', '#a7f3d0', '#86efac', '#4ade80', '#60a5fa', '#0ea5e9'];
+
+        function generateBoard() {
+            for (let row = 1; row <= 10; row++) {
+                for (let col = 1; col <= 10; col++) {
+                    const result = row * col;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'cube-wrapper';
+                    
+                    const cube = document.createElement('div');
+                    cube.className = 'cube';
+                    
+                    const front = document.createElement('div');
+                    front.className = 'cube-face cube-front';
+                    front.style.backgroundColor = columnColors[col - 1];
+                    front.innerText = `${row}×${col}`;
+                    
+                    const back = document.createElement('div');
+                    back.className = 'cube-face cube-back';
+                    back.innerText = result;
+
+                    const xPos = (col - 1) * (100 / 9);
+                    const yPos = (row - 1) * (100 / 9);
+                    back.style.backgroundPosition = `${xPos}% ${yPos}%`;
+
+                    cube.appendChild(front); cube.appendChild(back);
+                    wrapper.appendChild(cube); board.appendChild(wrapper);
+
+                    wrapper.addEventListener('click', () => {
+                        if (cube.classList.contains('flipped')) return; 
+                        openModal(row, col, result, cube);
+                    });
+                }
+            }
+        }
+
+        function openModal(row, col, answer, cubeElem) {
+            currentAnswer = answer; currentCubeElement = cubeElem; currentInputValue = "";
+            taskText.innerText = `${row} × ${col} = ?`; userInputDisplay.innerText = "_";
+            modal.classList.add('active');
+            initAudio(); 
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            currentCubeElement = null;
+        }
+
+        function appendNumber(num) {
+            if (currentInputValue.length < 3) {
+                currentInputValue += num.toString();
+                userInputDisplay.innerText = currentInputValue;
+            }
+        }
+
+        function clearInput() {
+            if (currentInputValue.length > 0) {
+                currentInputValue = currentInputValue.slice(0, -1);
+                userInputDisplay.innerText = currentInputValue === "" ? "_" : currentInputValue;
+            }
+        }
+
+        function checkAnswer(btnElement) {
+            if (currentInputValue === "") return; 
+            initAudio();
+
+            const guessed = parseInt(currentInputValue, 10);
+            const cubeToAnimate = currentCubeElement; 
+            
+            const rect = btnElement.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2 - 20;
+            const startY = rect.top + rect.height / 2 - 20;
+
+            if (guessed === currentAnswer) {
+                closeModal();
+                cubeToAnimate.classList.add('flipped');
+                
+                flauschiArea.style.display = 'flex';
+                flauschiText.innerText = praiseSentences[Math.floor(Math.random() * praiseSentences.length)];
+                
+                playSound('throw');
+                createFlyingItem('🥕', startX, startY, function() {
+                    carrots++;
+                    playSound('chew');
+                    
+                    flauschiSvg.classList.remove('chew', 'backflip', 'duck', 'bounce');
+                    void flauschiSvg.offsetWidth;
+                    flauschiSvg.classList.add('backflip');
+
+                    if (carrots >= 10) {
+                        carrots = 0;
+                        carrotCountEl.innerText = carrots;
+                        awardStar(); 
+                        setTimeout(() => flauschiArea.style.display = 'none', 4000); 
+                    } else {
+                        carrotCountEl.innerText = carrots;
+                        saveProgress();
+                        setTimeout(() => flauschiArea.style.display = 'none', 2500); 
+                    }
+                });
+
+            } else {
+                closeModal();
+                cubeToAnimate.classList.add('wobble');
+                setTimeout(() => { if(cubeToAnimate) cubeToAnimate.classList.remove('wobble'); }, 500);
+
+                flauschiArea.style.display = 'flex';
+                flauschiText.innerText = "Versuch's gleich nochmal!";
+                playSound('wrong');
+
+                flauschiSvg.classList.remove('chew', 'backflip', 'duck', 'bounce');
+                void flauschiSvg.offsetWidth;
+                flauschiSvg.classList.add('duck');
+
+                setTimeout(() => flauschiArea.style.display = 'none', 3000); 
+            }
+        }
+
+        generateBoard();
+
+    </script>
+</body>
+</html>
